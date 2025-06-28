@@ -1,0 +1,18 @@
+{
+  "name": "bun-bins",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "simple_upload": "simple_upload.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "cos-nodejs-sdk-v5": "^2.16.0-beta.3"
+  }
+}
