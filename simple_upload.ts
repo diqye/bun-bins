@@ -16,6 +16,9 @@ let parsed = parseArgs({
       type: "boolean",
       short: "f"
     },
+    hash: {
+      type: "boolean"
+    },
     prefix: {
       type: "string",
       short: "p"
@@ -46,8 +49,9 @@ if(parsed.values.help) {
   console.log("simple_upload [options] filepath")
   console.log("\noptions:")
   console.log("--force      [-f] 如果文件存在覆盖上传")
+  console.log("--hash            计算文件hash作为路径上传，设置浏览器缓存头十年")
   console.log("--prefix     [-p] 上传到哪个文件夹, 拼接规则/FE/bun/$prefix/$filename")
-  console.log("--delete key [  ] 删除 示例：-d /FE/bun/xx/x/xx")
+  console.log("--delete key      删除 示例：-d /FE/bun/xx/x/xx")
   console.log("--version    [-v] 打印版本号")
   console.log("--help       [-h] 帮助")
   process.exit(0)
@@ -66,6 +70,7 @@ let config = {
      *  FE/bun/simple 文件夹内，更新只缓存一分钟，其他是30天。
      */
     baseFolder: parsed.values.prefix ? path.join("FE/bun",parsed.values.prefix) : "FE/bun/simple/",
+    hashFolder: "FE/bun/hash/",
 }
 
 if(parsed.values.delete) {
@@ -79,7 +84,33 @@ if(parsed.values.delete) {
 }
 let file_path = parsed.positionals[0]
 if(file_path == null) {
-  console.log("缺少 filepath")
+  console.log("simple_upload --hash filepath")
+  process.exit(0)
+}
+if(parsed.values.hash) {
+  let buffer = await Bun.file(file_path).arrayBuffer()
+  let big_int = Bun.hash(buffer)
+  let key = path.join(config.hashFolder,big_int.toString(16) + path.extname(file_path))
+  let data = await cos.getBucket({
+    Bucket: config.bucket,
+    Prefix: key,
+    Region: config.region,
+    MaxKeys: 1,
+  })
+  if(data.Contents.length != 0) {
+    console.log("文件已经存在",config.origin + "/" + key)
+  } else {
+    await cos.putObject({
+        Body: Buffer.Buffer.from(await Bun.file(file_path).bytes()),
+        Bucket: config.bucket,
+        Region: config.region,
+        Key: key,
+        // 进制缓存
+        CacheControl: "public, max-age=315360000",
+        // Expires: new Date(0).toUTCString(),
+    });
+    console.log("上传成功",config.origin + "/" + key)
+  }
   process.exit(0)
 }
 let file_name = path.basename(file_path);
