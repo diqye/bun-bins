@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "bin": {
-    "simple_upload": "simple_upload.ts"
+    "simple_upload": "simple_upload.ts",
+    "download_qishui": "download_qishui.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
