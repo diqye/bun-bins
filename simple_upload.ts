@@ -45,10 +45,10 @@ if(parsed.values.version) {
 }
 
 if(parsed.values.help) {
-  console.log("simple_upload [options] filepath")
-  console.log("\noptions:")
+  console.log("simple_upload [Options] filepath")
+  console.log("\nOptions:")
   console.log("--force      [-f] 如果文件存在覆盖上传")
-  console.log("--hash            计算文件hash作为路径上传，设置浏览器缓存头十年")
+  console.log("--hash            计算文件hash作为key，保留文件后缀名，览器缓存头十年")
   console.log("--prefix     [-p] 上传到哪个文件夹, 拼接规则/FE/bun/$prefix/$filename")
   console.log("--delete key [-d] 删除 示例：-d /FE/bun/xx/x/xx")
   console.log("--version    [-v] 打印版本号")

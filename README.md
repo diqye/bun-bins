@@ -1,19 +1,24 @@
 # bun-bins
 
-用bun写的cli工具
+用bun写的日常CLI
 
-在当前目录使用`bun link`，自动在全局`$PATH` 下添加`cli` 。
+使用`bun link`， 自动软链到全局`$PATH` 下 。
 
 ## 腾讯cos 上传工具
-`simple_upload.ts`
-```
-simple_upload [options] filepath
 
-options:
+`simple_upload.ts`
+
+```
+simple_upload [Options] filepath
+
+Examples:
+    simple_upload --hash your/file/path
+    simple_upload --prefix a/b/c your/file/path
+Options:
 --force      [-f] 如果文件存在覆盖上传
---hash            计算文件hash作为路径上传，设置浏览器缓存头十年
+--hash            计算文件hash作为key，保留文件后缀名，览器缓存头十年
 --prefix     [-p] 上传到哪个文件夹, 拼接规则/FE/bun/$prefix/$filename
---delete key      删除 示例：-d /FE/bun/xx/x/xx
+--delete key [-d] 删除 示例：-d /FE/bun/xx/x/xx
 --version    [-v] 打印版本号
 --help       [-h] 帮助
 ```
