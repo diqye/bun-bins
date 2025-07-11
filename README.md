@@ -18,6 +18,20 @@ options:
 --help       [-h] 帮助
 ```
 
+## svg2react.ts
+
+将`svg xml`转为`React function component`。
+
+使用：
+```shell
+cat light.svg | svg2react
+```
+### 额外做的事情
+1. 格式化
+2. 去除冗余
+3. filter id唯一化，避免相同id冲突。
+4. 去除`width`和`height`转为`viewBox`,如果有。
+
 ## 下载汽水音乐
 ```
 download_qishui --url https://xxxx.cx.xx/x

@@ -5,7 +5,8 @@
   "private": true,
   "bin": {
     "simple_upload": "simple_upload.ts",
-    "download_qishui": "download_qishui.ts"
+    "download_qishui": "download_qishui.ts",
+    "svg2react": "svg2react.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -14,6 +15,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "cos-nodejs-sdk-v5": "^2.16.0-beta.3"
+    "cos-nodejs-sdk-v5": "^2.16.0-beta.3",
+    "svgo": "^4.0.0"
   }
 }

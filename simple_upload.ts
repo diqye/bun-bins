@@ -5,7 +5,7 @@ import Buffer from "buffer"
 import path from "path";
 import { parseArgs } from "util";
 
-let version = "0.0.1"
+let version = "0.0.2"
 let secretId = process.env["zmexing_cdn_secretId"]
 let secretKey = process.env["zmexing_cdn_secretkey"]
 let args = Bun.argv.slice(2)
@@ -23,10 +23,9 @@ let parsed = parseArgs({
       type: "string",
       short: "p"
     },
-    // 删除不提供短命令
     delete: {
       type: "string",
-      // short: "d"
+      short: "d"
     },
     version: {
       type: "boolean",
@@ -51,7 +50,7 @@ if(parsed.values.help) {
   console.log("--force      [-f] 如果文件存在覆盖上传")
   console.log("--hash            计算文件hash作为路径上传，设置浏览器缓存头十年")
   console.log("--prefix     [-p] 上传到哪个文件夹, 拼接规则/FE/bun/$prefix/$filename")
-  console.log("--delete key      删除 示例：-d /FE/bun/xx/x/xx")
+  console.log("--delete key [-d] 删除 示例：-d /FE/bun/xx/x/xx")
   console.log("--version    [-v] 打印版本号")
   console.log("--help       [-h] 帮助")
   process.exit(0)
