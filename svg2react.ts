@@ -64,10 +64,10 @@ while(true) {
     let text = new TextDecoder().decode(chunk.value);
     svg.push(text)
     if(text.trimEnd().endsWith("</svg>")) {
-        reader.cancel();
         break
     }
     if(chunk.done) break
 }
+reader.cancel();
 let text = renderReactSvg(svg.join(""))
 console.log(text);

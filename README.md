@@ -4,8 +4,47 @@
 
 使用`bun link`， 自动软链到全局`$PATH` 下 。
 
-## 腾讯cos 上传工具
 
+## src/json2ts.ts
+> 将`json`转换为`typescript`
+
+```sh
+~/p/t/bun-bins (master|✚3) $ curl ipinfo.io | json2ts 
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   335  100   335    0     0    761      0 --:--:-- --:--:-- --:--:--   763
+type Diqye = {
+  ip: string;
+  hostname: string;
+  city: string;
+  region: string;
+  country: string;
+  loc: string;
+  org: string;
+  postal: string;
+  timezone: string;
+  readme: string;
+}
+```
+```sh
+~/p/t/bun-bins (master|✚3) $ curl ipinfo.io
+{
+  "ip": "124.127.135.194",
+  "hostname": "194.135.127.124.broad.bj.bj.static.163data.com.cn",
+  "city": "Beijing",
+  "region": "Beijing",
+  "country": "CN",
+  "loc": "39.9075,116.3972",
+  "org": "AS4847 China Networks Inter-Exchange",
+  "postal": "100000",
+  "timezone": "Asia/Shanghai",
+  "readme": "https://ipinfo.io/missingauth"
+}⏎ 
+```
+
+## simple_upload.ts
+
+上传腾讯`cos` 
 `simple_upload.ts`
 
 ```
