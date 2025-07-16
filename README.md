@@ -49,17 +49,20 @@ type Diqye = {
 
 ```
 simple_upload [Options] filepath
-
-Examples:
-    simple_upload --hash your/file/path
-    simple_upload --prefix a/b/c your/file/path
-Options:
---force      [-f] 如果文件存在覆盖上传
---hash            计算文件hash作为key，保留文件后缀名，览器缓存头十年
---prefix     [-p] 上传到哪个文件夹, 拼接规则/FE/bun/$prefix/$filename
---delete key [-d] 删除 示例：-d /FE/bun/xx/x/xx
---version    [-v] 打印版本号
---help       [-h] 帮助
+依赖环境变量： $zmexing_cdn_secretId $zmexing_cdn_secretkey
+version-1.0.0
+┌─────────┬─────────┬───────┬───────────────────────────────────────────────────────────────────┐
+│         │ type    │ short │ help                                                              │
+├─────────┼─────────┼───────┼───────────────────────────────────────────────────────────────────┤
+│   force │ boolean │ f     │ 如果文件存在,强制覆盖                                             │
+│    hash │ boolean │       │ 计算文件hash作为文件名,保留文件后缀名,设置览器缓存Header,十年过期 │
+│  prefix │ string  │ p     │ 文件前缀路径,拼接规则 FE/bun/$prefix/$filename                    │
+│  delete │ string  │ d     │ 删除 示例：-d  FE/bun/xx/x/xx                                     │
+│ version │ boolean │ v     │ 版本信息                                                          │
+│    help │ boolean │ h     │ 打印帮助                                                          │
+│    list │ string  │ l     │ 列出指定key下面的内容，最多100条. -l FE/bun/                      │
+│  marker │ string  │ m     │ 和--list一起使用，从哪个key开始列出                               │
+└─────────┴─────────┴───────┴───────────────────────────────────────────────────────────────────┘
 ```
 
 ## svg2react.ts

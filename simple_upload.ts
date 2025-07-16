@@ -5,39 +5,57 @@ import Buffer from "buffer"
 import path from "path";
 import { parseArgs } from "util";
 
-let version = "0.0.2"
+let version = "1.0.0"
 let secretId = process.env["zmexing_cdn_secretId"]
 let secretKey = process.env["zmexing_cdn_secretkey"]
 let args = Bun.argv.slice(2)
-let parsed = parseArgs({
+
+let parseArgsProps = {
   args,
   options: {
     force: {
       type: "boolean",
-      short: "f"
+      short: "f",
+      help: "如果文件存在,强制覆盖"
     },
     hash: {
-      type: "boolean"
+      type: "boolean",
+      help: "计算文件hash作为文件名,保留文件后缀名,设置览器缓存Header,十年过期"
     },
     prefix: {
       type: "string",
-      short: "p"
+      short: "p",
+      help: "文件前缀路径,拼接规则 FE/bun/$prefix/$filename"
     },
     delete: {
       type: "string",
-      short: "d"
+      short: "d",
+      help: "删除 示例：-d  FE/bun/xx/x/xx"
     },
     version: {
       type: "boolean",
-      short: "v"
+      short: "v",
+      help: "版本信息"
     },
     help: {
       type: "boolean",
-      short: "h"
+      short: "h",
+      help: "打印帮助"
+    },
+    list: {
+      type: "string",
+      short: "l",
+      help: "列出指定key下面的内容，最多100条. -l FE/bun/"
+    },
+    marker: {
+      type: "string",
+      short: "m",
+      help: "和--list一起使用，从哪个key开始列出"
     }
   },
   allowPositionals: true
-})
+} as const
+let parsed = parseArgs(parseArgsProps)
 
 if(parsed.values.version) {
   console.log(version)
@@ -46,13 +64,17 @@ if(parsed.values.version) {
 
 if(parsed.values.help) {
   console.log("simple_upload [Options] filepath")
-  console.log("\nOptions:")
-  console.log("--force      [-f] 如果文件存在覆盖上传")
-  console.log("--hash            计算文件hash作为key，保留文件后缀名，览器缓存头十年")
-  console.log("--prefix     [-p] 上传到哪个文件夹, 拼接规则/FE/bun/$prefix/$filename")
-  console.log("--delete key [-d] 删除 示例：-d /FE/bun/xx/x/xx")
-  console.log("--version    [-v] 打印版本号")
-  console.log("--help       [-h] 帮助")
+  console.log("依赖环境变量： $zmexing_cdn_secretId $zmexing_cdn_secretkey")
+  console.log("version-" + version)
+  console.table(parseArgsProps.options)
+  // console.log("--force       [-f] 如果文件存在覆盖上传")
+  // console.log("--list   key  [-l] 列出该key下内容，100条 eg: -l FE/bun/simple")
+  // console.log("--marker key  [-l] 和--list一起使用，从marker位置开下列出100个")
+  // console.log("--hash             计算文件hash作为key，保留文件后缀名，览器缓存头十年")
+  // console.log("--prefix      [-p] 上传到哪个文件夹, 拼接规则 FE/bun/$prefix/$filename")
+  // console.log("--delete  key [-d] 删除 示例：-d  FE/bun/xx/x/xx")
+  // console.log("--version     [-v] 打印版本号")
+  // console.log("--help        [-h] 帮助")
   process.exit(0)
 }
 
@@ -79,6 +101,34 @@ if(parsed.values.delete) {
     Key: parsed.values.delete
   })
   console.log("删除成功",parsed.values.delete,deleted)
+  process.exit(0)
+}
+if(parsed.values.list != null) {
+  let result = await cos.getBucket({
+    Bucket: config.bucket,
+    Region: config.region,
+    Prefix: parsed.values.list,
+    MaxKeys: 100,
+    Delimiter: "/",
+    Marker: parsed.values.marker
+  })
+
+  console.table(result.CommonPrefixes.map(a=>{
+    return {
+      key: a.Prefix,
+      url: "--",
+      last_modified: "dir"
+    }
+  }).concat(result.Contents.map(a=>{
+    return {
+      key: a.Key,
+      url: config.origin + "/" + a.Key,
+      last_modified: new Date(a.LastModified).toLocaleString()
+    }
+  })))
+  if(result.IsTruncated == "true") {
+    console.log("数据被截断，最多限制为100条\n next marker is",result.NextMarker)
+  }
   process.exit(0)
 }
 let file_path = parsed.positionals[0]
@@ -130,6 +180,7 @@ if(data.Contents.length != 0) {
     process.exit(0)
   }
 }
+
 
 await cos.putObject({
     Body: Buffer.Buffer.from(await Bun.file(file_path).bytes()),
