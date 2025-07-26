@@ -88,3 +88,7 @@ options:
 --version    [-v] 打印版本号
 --help       [-h] 帮助
 ```
+
+## src/demo/function_calling.ts
+
+带`function`的AI交互CLI，流式。
