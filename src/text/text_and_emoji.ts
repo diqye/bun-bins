@@ -72,9 +72,11 @@ if(options.values.decode) {
 
 let in_buff_compressed = gzipSync(in_buff)
 if(in_buff_compressed.byteLength > in_buff.byteLength) {
+    let writer = out.writer()
     for(let byte of in_buff){
-        out.write(convert_map[byte] ?? "")
+        writer.write(convert_map[byte] ?? "")
     }
+    writer.end()
 } else {
     let writer = out.writer()
     writer.write(gzip_flag)
