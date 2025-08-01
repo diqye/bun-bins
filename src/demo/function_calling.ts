@@ -1,5 +1,7 @@
 
-
+/**
+ * https://docs.bigmodel.cn/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8
+ */
 let reader = Bun.stdin.stream().getReader()
 let stdout = Bun.stdout
 let llm_key = Bun.env["zhipu_llm"]
@@ -40,9 +42,9 @@ async function createLLM(){
     // 3. g: 概括
     // 4. l: 理解
     let context = {
-        // 模型编码：glm-4-plus、glm-4-air-250414、glm-4-airx、glm-4-long 、glm-4-flashx 、glm-4-flash-250414；
+        // 模型编码：glm-4.5 glm-4-plus、glm-4-air-250414、glm-4-airx、glm-4-long 、glm-4-flashx 、glm-4-flash-250414；
         // 抢先体验最新公测模型：glm-experimental-preview、价格：3元/M Tokens
-        model: "glm-4-plus",
+        model: "glm-4.5",
         stream: true,
         temperature: 0,
         messages: [{
@@ -154,11 +156,28 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
         let reader = resp.body?.getReader()
         if(reader == null) throw "Reader is null"
         let assistant_content = [] as string []
+        let set_color_called = false
+        let clear_color_called = false
+        let set_color = () => {
+            if(set_color_called) return
+            set_color_called = true
+            stdout.write(Bun.color("gray","ansi-16m") ?? "")
+        }
+        let clear_color = () => {
+            if(clear_color_called) return
+            clear_color_called = true
+            stdout.write("\x1b[0m")
+        }
         while(true) {
             let result = await reader.read()
             if(result.done) break
             let str_m = new TextDecoder().decode(result.value)
             let last_partial = ""
+            if(str_m.startsWith("data:") == false) {
+                console.log(JSON.stringify(context))
+                console.log(str_m)
+                throw "unreachable"
+            }
             for(let str of str_m.split("\n")) {
                 str = last_partial + str.trim()
                 last_partial = ""
@@ -180,6 +199,14 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
                     stdout.write("\x1b[0m")
                     continue
                 }
+                let reason = json?.choices?.[0]?.delta?.reasoning_content
+                if(reason != null) {
+                    set_color()
+                    stdout.write(reason)
+                    continue
+                } else {
+                    clear_color()
+                }
                 let content = json?.choices?.[0]?.delta?.content
                 let delta = json?.choices?.[0]?.delta 
                 if(delta?.tool_calls) {
@@ -190,7 +217,7 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
                 }
                 if(content == null) {
                     console.error(str)
-                    throw "获取不到content"
+                    throw "content=null,unreachable"
                 }
                 stdout.write(content)
                 assistant_content.push(content)
@@ -233,6 +260,7 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
             stdout.write("\n")
             return
         }
+        content.json.role = "assistant"
         context.messages.push(content.json)
         for(let tool_call of content.json?.tool_calls) {
             stdout.write(Bun.color("teal","ansi-16m") + "Function calling: " + tool_call?.function?.name + "\n")

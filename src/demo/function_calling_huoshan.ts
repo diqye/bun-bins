@@ -1,5 +1,5 @@
 
-
+// https://www.volcengine.com/docs/82379/1494384
 let reader = Bun.stdin.stream().getReader()
 let stdout = Bun.stdout
 let llm_key = Bun.env["huoshan_llm_key"]
@@ -31,7 +31,7 @@ let functions = {
 }
 
 // 创建LLM交互instance
-async function createLLM(){
+async function createLLM(stream=true){
     // 上下文
     // system: 语文老师, 包含题目信息和答案
     // Function calling： 
@@ -42,7 +42,7 @@ async function createLLM(){
     let context = {
         
         model: "doubao-1-5-pro-32k-250115",
-        stream: true,
+        stream,
         parallel_tool_calls:true,
         stream_options: {
             include_usage: true
@@ -154,9 +154,37 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
         type: "other",
         json: any
     }> {
+        // 如果是block的方式
+        if(stream == false) {
+            let resp_json = await resp.json() as any
+            let content = resp_json?.choices?.[0]?.message?.content
+            let delta = resp_json?.choices?.[0]?.message 
+            if(resp_json.usage) {
+                console.log(Bun.color("pink","ansi-16m"))
+                stdout.write("total_tokens = " + resp_json.usage.total_tokens)
+                stdout.write("\x1b[0m\n")
+            }
+            if(delta?.tool_calls) {
+                return {
+                    type: "other",
+                    json: delta
+                }
+            }
+            if(content != null && content.length > 0) {
+                stdout.write(content)
+                return {
+                    type: "content",
+                    content: [content]
+                }
+            }
+            console.log(JSON.stringify(resp_json))
+            throw "unreachable"
+        }
+        // 流的方式
         let reader = resp.body?.getReader()
         if(reader == null) throw "Reader is null"
         let assistant_content = [] as string []
+        let tool_calls = []
         while(true) {
             let result = await reader.read()
             if(result.done) break
@@ -186,10 +214,8 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
                 let content = json?.choices?.[0]?.delta?.content
                 let delta = json?.choices?.[0]?.delta 
                 if(delta?.tool_calls) {
-                    return {
-                        type: "other",
-                        json: delta
-                    }
+                    tool_calls.push(delta)
+                    continue
                 }
                 if(content == null) {
                     console.error(str)
@@ -201,11 +227,21 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
                 
             }
         }
+        if(tool_calls.length != 0) {
+            return {
+                type: "other",
+                json: tool_calls.reduce((a,b)=>{
+                    a.tool_calls[0].function.arguments += b.tool_calls[0].function.arguments 
+                    return a
+                })
+            }
+        }
         return {
             type: "content",
             content: assistant_content
         }
     }
+
     // 初始化llm
     async function init() {
         let resp = await fetchLLM(context)
@@ -237,7 +273,8 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
         }
         context.messages.push(content.json)
         for(let tool_call of content.json?.tool_calls) {
-            stdout.write(Bun.color("teal","ansi-16m") + "Function calling: " + tool_call?.function?.name + "\n")
+     
+            stdout.write(Bun.color("teal","ansi-16m") + "\nFunction calling: " + tool_call?.function?.name + "\n")
             let args =  tool_call?.function?.arguments
             console.log("Props: " + args)
             if(args.length == 0) {
@@ -266,7 +303,7 @@ l1 = 理解（基础题解，level=1），l2, l3, l4 = 理解（逐级深入，l
     }
 }
 
-let llm = await createLLM()
+let llm = await createLLM(true)
 
 while(true) {
     stdout.write("User => ")
