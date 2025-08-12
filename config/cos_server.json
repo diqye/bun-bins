@@ -1,0 +1,10 @@
+{
+    "secret_id": "xxx",
+    "secret_key": "xxx",
+    "bucket": "static-xx",
+    "region": "ap-beijing",
+    "origin": "https://static.xx.com",
+    "small_key_map": {
+        "abc": "test"
+    }
+}

@@ -4,18 +4,35 @@
 
 使用`bun link`， 自动软链到全局`$PATH` 下 。
 
+## src/manage/cos_client.zig src/manage/cos_server.ts
+
+ COS上传客户端和服务。 用于下发小`key` 便于管理。
+
+## src/tool/fetch_meta.ts
+抓取网站标题、LOGO、描述
+```shell
+~/p/t/bun-bins (master|✚1) $ bun run src/tool/fetch_meta.ts --url=https://www.dogdog.work
+{
+  url: "https://www.dogdog.work",
+  title: "狗狗小工具",
+  icon: "https://www.dogdog.work/_next/static/media/doge.f76abb60.png",
+  description: "我一生之致乐在敲码为程序之时心中错综复杂之妙想我码皆可畅达之我自谓人生至乐未有过于此也",
+}
+```
+
 ## src/text/text_and_emoji.ts
 将文本/二进制转换为表情符号和反向操作
 
 ```shell
 从stdin中读取数据编码为表情符号/解码为原始数据
-┌────────┬─────────┬───────┬──────────────────────────────────┐
-│        │ type    │ short │ help                             │
-├────────┼─────────┼───────┼──────────────────────────────────┤
-│ output │ string  │ o     │ 指定输出文件，默认打印到stdout中 │
-│ decode │ boolean │ d     │ 解码，默认为编码                 │
-│   help │ boolean │ h     │ 打印帮助                         │
-└────────┴─────────┴───────┴──────────────────────────────────┘
+┌──────────┬─────────┬───────┬──────────────────────────────────┐
+│          │ type    │ short │ help                             │
+├──────────┼─────────┼───────┼──────────────────────────────────┤
+│   output │ string  │ o     │ 指定输出文件，默认打印到stdout中 │
+│   decode │ boolean │ d     │ 解码，默认为编码                 │
+│ password │ string  │ p     │ 设置密码                         │
+│     help │ boolean │ h     │ 打印帮助                         │
+└──────────┴─────────┴───────┴──────────────────────────────────┘
 ```
 
 ## src/json2ts.ts

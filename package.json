@@ -8,7 +8,8 @@
     "download_qishui": "download_qishui.ts",
     "svg2react": "svg2react.ts",
     "json2ts": "src/json2ts.ts",
-    "text_and_emoji": "src/text/text_and_emoji.ts"
+    "text_and_emoji": "src/text/text_and_emoji.ts",
+    "fetch_meta": "src/tool/fetch_meta.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
