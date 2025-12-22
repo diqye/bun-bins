@@ -4,6 +4,10 @@
 
 使用`bun link`， 自动软链到全局`$PATH` 下 。
 
+## src/wasm
+
+`zig` `wasm` `typescript` demo
+
 ## src/manage/cos_client.zig src/manage/cos_server.ts
 
  COS上传客户端和服务。 用于下发小`key` 便于管理。

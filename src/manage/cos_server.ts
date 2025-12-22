@@ -18,9 +18,9 @@ async function parseConfig(req: BunRequest) {
         }
     }
     let key = req.headers.get("authorization")
-    if (key == null) return "upload_key is required"
+    if (key == null) return "authorization is required"
     let path = config_json.small_key_map[key]
-    if (path == null) return "upload_key isn't existed"
+    if (path == null) return "authorization doesn't exist"
     return {
         secret_id: config_json.secret_id,
         secret_key: config_json.secret_key,

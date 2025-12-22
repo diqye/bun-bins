@@ -9,7 +9,8 @@
     "svg2react": "svg2react.ts",
     "json2ts": "src/json2ts.ts",
     "text_and_emoji": "src/text/text_and_emoji.ts",
-    "fetch_meta": "src/tool/fetch_meta.ts"
+    "fetch_meta": "src/tool/fetch_meta.ts",
+    "ainame":"src/ainame/ainame.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -18,8 +19,11 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@diqye/myparser": "^0.4.2",
+    "@remotion/renderer": "^4.0.379",
     "cos-nodejs-sdk-v5": "^2.16.0-beta.3",
     "json-to-ts": "^2.1.0",
-    "svgo": "^4.0.0"
+    "svgo": "^4.0.0",
+    "zod": "^4.1.13"
   }
 }
