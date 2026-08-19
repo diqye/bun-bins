@@ -3,47 +3,52 @@ import type { ListenInputProps } from "./const"
 import { generateListen } from "./llm"
 import { renderListen } from "./render"
 import { imageGenerate, speech } from "./tts"
+import { confirm, editor, input, select } from "@inquirer/prompts"
 
-let reader = stdin.stream().getReader()
-async function readLine() {
-    const value = await reader.read()
-    if(value.done) process.exit()
-    return new TextDecoder("utf-8").decode(value.value)
+process.on("uncaughtException",error=>{
+    if (error?.name === 'ExitPromptError') {
+        console.log("你已退出程序")
+        return
+    }
+    throw error
+})
+
+const keybindingsTheme = {
+    keybindings: ["vim","emacs"] as const
 }
-stdout.write("级别(A2、B1):")
 const level_map = {
-    "A2": "A2基础级：",
-    "B1": "B1进阶级："
+    "A2": "A2基础级",
+    "B1": "B1进阶级"
 }
 
-const level_raw = await readLine()
-const level = level_raw.trim()
-const level_description = level_map[level as keyof typeof level_map]
-if(level_description == null) {
-    console.log("选项不存在")
-    process.exit()
-}
-console.log(level_description)
+const level  = await select({
+    choices: [{
+        value: "A2",
+        name: level_map["A2"]
+    },{
+        value: "B1",
+        name: level_map["B1"]
+    }] as const,
+    message: "选择级别",
+    theme: keybindingsTheme
+})
 
-stdout.write("编号(001):")
-const code_raw = await readLine()
-const code = code_raw.trim()
-console.log(code)
-stdout.write("主题:")
-const title_raw = await readLine()
-const title = title_raw.trim()
-console.log(title)
-// const argv = Bun.argv
-// const title = argv.slice(2).join(" ")
-// if(title == "") {
-//     console.log("请给我一个核心主题:")
-//     console.log("bun run src/english/listen_main.ts title")
-//     process.exit()
-// }
+const code = await input({
+    message: "课程编码",
+    validate: text => text != "" ? true : "你必须提供一个编码"
+})
+const topic = await input({
+    message: "输入主题",
+    validate: text => text != "" ? true : "你必须提供一个主题"
+})
+const isContinue = await confirm({
+    message: "是否继续?"
+})
+if(!isContinue) process.exit(0)
 
 const dirname = "listen" + Date.now().toString()
 const base_path = `../video-generator/build/public/`
-const llm_data = await generateListen(level_description + title)
+const llm_data = await generateListen(level,topic)
 if(llm_data == null) {
     process.exit()
 }
@@ -105,4 +110,3 @@ await Bun.write(json_path,JSON.stringify(input_props,undefined,4))
 console.log("渲染中...")
 await renderListen(input_props,llm_data.filename)
 
-await reader.cancel()

@@ -3,6 +3,14 @@ import { llm_key, minimax_key, type Dialogue, type DialogueAudio, type DialogueR
 export function omitEm(text:string) {
     return text.replaceAll("<em>","").replaceAll("</em>","")
 }
+export function processTextForVoice(text:string) {
+    return text
+    .replaceAll("……","什么什么")
+    .replaceAll("...","什么什么")
+    .replaceAll("…","怎么样怎么样")
+    .replaceAll("~","")
+    .replaceAll("～","")
+}
 
 export function getVoice(role:Role) {
     return role

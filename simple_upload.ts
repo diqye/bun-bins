@@ -154,7 +154,6 @@ if(parsed.values.hash) {
         Bucket: config.bucket,
         Region: config.region,
         Key: key,
-        // 进制缓存
         CacheControl: "public, max-age=315360000",
         // Expires: new Date(0).toUTCString(),
     });
@@ -187,9 +186,9 @@ await cos.putObject({
     Bucket: config.bucket,
     Region: config.region,
     Key: key,
-    // 进制缓存
-    CacheControl: "no-store",
-    Expires: new Date(0).toUTCString(),
+    // 无缓存
+    // CacheControl: "no-store",
+    // Expires: new Date(0).toUTCString(),
 });
 
 // console.log(result)
