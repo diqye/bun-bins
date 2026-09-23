@@ -21,8 +21,6 @@
   },
   "dependencies": {
     "@diqye/myparser": "^0.4.2",
-    "@inquirer/prompts": "^8.2.0",
-    "@remotion/renderer": "^4.0.379",
     "cos-nodejs-sdk-v5": "^2.16.0-beta.3",
     "json-to-ts": "^2.1.0",
     "playwright": "^1.57.0",
