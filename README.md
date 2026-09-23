@@ -94,7 +94,3 @@ bun run src/tool/fetch_meta.ts --url=https://www.dogdog.work
 download_douyin --url https://v.douyin.com/xxxx
 download_qishui --url https://xxxx
 ```
-
-## src/manage — COS 小 key 下发服务
-
-`cos_server.ts` + `config/cos_server.json`，用于按短 key 下发 COS 对象，便于管理；`cos_client.zig` 为对应客户端。
