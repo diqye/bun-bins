@@ -1,128 +1,100 @@
 # bun-bins
 
-用bun写的日常CLI
-
-使用`bun link`， 自动软链到全局`$PATH` 下 。
-
-## src/wasm
-
-`zig` `wasm` `typescript` demo
-
-## src/manage/cos_client.zig src/manage/cos_server.ts
-
- COS上传客户端和服务。 用于下发小`key` 便于管理。
-
-## src/tool/fetch_meta.ts
-抓取网站标题、LOGO、描述
-```shell
-~/p/t/bun-bins (master|✚1) $ bun run src/tool/fetch_meta.ts --url=https://www.dogdog.work
-{
-  url: "https://www.dogdog.work",
-  title: "狗狗小工具",
-  icon: "https://www.dogdog.work/_next/static/media/doge.f76abb60.png",
-  description: "我一生之致乐在敲码为程序之时心中错综复杂之妙想我码皆可畅达之我自谓人生至乐未有过于此也",
-}
-```
-
-## src/text/text_and_emoji.ts
-将文本/二进制转换为表情符号和反向操作
-
-```shell
-从stdin中读取数据编码为表情符号/解码为原始数据
-┌──────────┬─────────┬───────┬──────────────────────────────────┐
-│          │ type    │ short │ help                             │
-├──────────┼─────────┼───────┼──────────────────────────────────┤
-│   output │ string  │ o     │ 指定输出文件，默认打印到stdout中 │
-│   decode │ boolean │ d     │ 解码，默认为编码                 │
-│ password │ string  │ p     │ 设置密码                         │
-│     help │ boolean │ h     │ 打印帮助                         │
-└──────────┴─────────┴───────┴──────────────────────────────────┘
-```
-
-## src/json2ts.ts
-> 将`json`转换为`typescript`
+Bun 写的日常 CLI 合集。
 
 ```sh
-~/p/t/bun-bins (master|✚3) $ curl ipinfo.io | json2ts 
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100   335  100   335    0     0    761      0 --:--:-- --:--:-- --:--:--   763
-type Diqye = {
-  ip: string;
-  hostname: string;
-  city: string;
-  region: string;
-  country: string;
-  loc: string;
-  org: string;
-  postal: string;
-  timezone: string;
-  readme: string;
-}
+bun install && bun link
 ```
+
+`bun link` 会把下表命令软链到全局 `$PATH`，改完代码即时生效，无需重新构建。
+
+## 命令总表
+
+| 命令 | 用途 |
+|------|------|
+| `peek` | 在终端里查看任意文件：文本直出、图片/PDF 可视化、二进制元信息 |
+| `download_douyin` | 下载抖音视频 |
+| `download_qishui` | 下载汽水音乐 |
+| `simple_upload` | 上传/管理腾讯 COS |
+| `svg2react` | SVG 转 React 组件 |
+| `json2ts` | JSON 转 TypeScript 类型 |
+| `text_and_emoji` | 文本与 emoji 互转（可加密） |
+| `fetch_meta` | 抓取网站标题、LOGO、描述 |
+
+## peek
+
+像 read 工具一样在终端查看任意文件：
+
+- 文本/代码原样输出；目录列出条目
+- 图片(png/jpeg/gif/webp/heic/tiff/avif/ico)按 kitty/iTerm2 图形协议内联显示，序列与 cell 尺寸探测(`CSI 16 t`)对齐 pi TUI 的实现，heic 等格式自动经 `sips` 转 png
+- PDF 用 pdftoppm 按页渲染(`--head=N`/`--last=N` 选页，多页带页码标签)，退到 qlmanage 首页缩略图
+- 其它二进制显示路径/类型/大小/`file` 描述/头部 hex
+- 管道或不支持图像的终端自动降级为元信息
+
 ```sh
-~/p/t/bun-bins (master|✚3) $ curl ipinfo.io
-{
-  "ip": "124.127.135.194",
-  "hostname": "194.135.127.124.broad.bj.bj.static.163data.com.cn",
-  "city": "Beijing",
-  "region": "Beijing",
-  "country": "CN",
-  "loc": "39.9075,116.3972",
-  "org": "AS4847 China Networks Inter-Exchange",
-  "postal": "100000",
-  "timezone": "Asia/Shanghai",
-  "readme": "https://ipinfo.io/missingauth"
-}⏎ 
+peek file.png
+peek --head=3 doc.pdf        # 前 3 页
+peek --last=2 doc.pdf        # 后 2 页
+peek --proto=kitty file.png  # 强制图像协议
+peek a.txt b.pdf /bin/ls     # 多文件带标题头分隔
 ```
 
-## simple_upload.ts
+详见 [peek/README.md](peek/README.md)。
 
-上传腾讯`cos` 
-`simple_upload.ts`
+## simple_upload
 
-```
-simple_upload [Options] filepath
-依赖环境变量： $zmexing_cdn_secretId $zmexing_cdn_secretkey
-version-1.0.0
-┌─────────┬─────────┬───────┬───────────────────────────────────────────────────────────────────┐
-│         │ type    │ short │ help                                                              │
-├─────────┼─────────┼───────┼───────────────────────────────────────────────────────────────────┤
-│   force │ boolean │ f     │ 如果文件存在,强制覆盖                                             │
-│    hash │ boolean │       │ 计算文件hash作为文件名,保留文件后缀名,设置览器缓存Header,十年过期 │
-│  prefix │ string  │ p     │ 文件前缀路径,拼接规则 FE/bun/$prefix/$filename                    │
-│  delete │ string  │ d     │ 删除 示例：-d  FE/bun/xx/x/xx                                     │
-│ version │ boolean │ v     │ 版本信息                                                          │
-│    help │ boolean │ h     │ 打印帮助                                                          │
-│    list │ string  │ l     │ 列出指定key下面的内容，最多100条. -l FE/bun/                      │
-│  marker │ string  │ m     │ 和--list一起使用，从哪个key开始列出                               │
-└─────────┴─────────┴───────┴───────────────────────────────────────────────────────────────────┘
+上传/管理腾讯 COS，依赖环境变量 `$zmexing_cdn_secretId` `$zmexing_cdn_secretkey`。
+
+```sh
+simple_upload [options] filepath
+  -f        文件存在时强制覆盖
+  --hash    文件 hash 作为文件名并设置十年缓存
+  -p dir    前缀路径，拼接规则 FE/bun/$prefix/$filename
+  -d key    删除指定对象
+  -l key    列出指定前缀下内容(最多100条)
+  -m key    与 -l 配合，分页起点
 ```
 
-## svg2react.ts
+## svg2react
 
-将`svg xml`转为`React function component`。
+SVG 转 React function component：格式化、去冗余、filter id 唯一化、`width/height` 归一为 `viewBox`。
 
-使用：
-```shell
+```sh
 cat light.svg | svg2react
 ```
-### 额外做的事情
-1. 格式化
-2. 去除冗余
-3. filter id唯一化，避免相同id冲突。
-4. 去除`width`和`height`转为`viewBox`,如果有。
 
-## 下载汽水音乐
-```
-download_qishui --url https://xxxx.cx.xx/x
+## json2ts
 
-options:
---url             汽水音乐分享的url
---version    [-v] 打印版本号
---help       [-h] 帮助
+JSON 转 TypeScript 类型，读 stdin。
+
+```sh
+curl -s ipinfo.io | json2ts
 ```
 
-## src/demo/function_calling.ts
+## text_and_emoji
 
-带`function`的AI交互CLI，流式。
+文本/二进制与 emoji 序列互转，支持密码。
+
+```sh
+echo "hello" | text_and_emoji              # 编码
+echo "😌_iso...😌" | text_and_emoji -d      # 解码
+```
+
+## fetch_meta
+
+抓取网站标题、LOGO、描述。
+
+```sh
+bun run src/tool/fetch_meta.ts --url=https://www.dogdog.work
+```
+
+## download_douyin / download_qishui
+
+```sh
+download_douyin --url https://v.douyin.com/xxxx
+download_qishui --url https://xxxx
+```
+
+## src/manage — COS 小 key 下发服务
+
+`cos_server.ts` + `config/cos_server.json`，用于按短 key 下发 COS 对象，便于管理；`cos_client.zig` 为对应客户端。
