@@ -85,7 +85,7 @@ echo "😌_iso...😌" | text_and_emoji -d      # 解码
 抓取网站标题、LOGO、描述。
 
 ```sh
-bun run src/tool/fetch_meta.ts --url=https://www.dogdog.work
+fetch_meta --url=https://www.dogdog.work
 ```
 
 ## download_douyin / download_qishui
