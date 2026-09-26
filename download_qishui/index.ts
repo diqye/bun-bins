@@ -4,9 +4,10 @@ import path from "node:path"
 import os from "node:os"
 import { mkdir } from "node:fs/promises";
 import { parseArgs } from "util";
-import { anyChar, composeP, fmap, manyTill, search, space, spaces } from "@diqye/myparser";
+import { anyChar, composeP, fmap, manyTill, search, space } from "@diqye/myparser";
+import { chromium } from "playwright";
 
-let version = "0.1.1"
+let version = "0.2.0"
 let args = Bun.argv.slice(2)
 let parsed = parseArgs({
     args,
@@ -54,100 +55,58 @@ if (url_result.status != "SUCCESS") {
     process.exit()
 }
 
-let response = await fetch(url_result.value);
-let text_chunk = [] as string[]
-let rewriter = new HTMLRewriter().on("script[data-script-src=modern-inline]", {
-    text(txt) {
-        if (txt.text.startsWith("_ROUTER_DATA")) {
-            text_chunk.push(txt.text.slice(txt.text.indexOf("{")))
-        } else {
-            text_chunk.push(txt.text)
-        }
+// channel: "chrome" 直接驱动本机安装的 Chrome，无需下载 playwright 浏览器
+const browser = await chromium.launch({ headless: true, channel: "chrome" });
+const page = await browser.newPage();
+let isHanding = false
+page.route("**/*",async route => {
+    const request = route.request()
+    // 汽水的音频/视频都走 douyinvod.com，页面播放器以 media 类型加载
+    if(request.resourceType() !== "media" || /douyinvod\.com/.test(request.url()) == false) {
+        route.continue()
+        return
     }
-})
+    if(isHanding) {
+        route.abort()
+        return
+    }
+    isHanding = true
+    route.abort()
 
-await rewriter.transform(response).blob();
-let data_str = text_chunk.join("")
-let end_index = data_str.indexOf(";\n");
-data_str = data_str.slice(0, end_index);
-let music_data = JSON.parse(data_str)
-downloadMp3(music_data)
-
-function downloadMedia(url: string) {
-    return fetch(url, {
-        "headers": {
+    const response = await fetch(request.url(), {
+        method: "GET",
+        headers: {
             "accept": "*/*",
-            "accept-language": "en",
-            "priority": "i",
             "range": "bytes=0-",
-            "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"macOS\"",
             "sec-fetch-dest": "audio",
             "sec-fetch-mode": "no-cors",
             "sec-fetch-site": "cross-site",
-            "sec-fetch-storage-access": "active"
-        },
-        "referrer": "https://music.douyin.com/",
-        "body": null,
-        "method": "GET",
-        "mode": "cors",
-        "credentials": "omit"
-    });
-}
-
-
-// 《茉莉花》@汽水音乐 https://qishui.douyin.com/s/imF4sotY/
-
-async function downloadMp3(data: any) {
-    let audio_obj = data.loaderData.track_page?.audioWithLyricsOption
-    if (audio_obj == null) {
-        // 视频下载逻辑
-        const video_obj = data.loaderData.ugc_video_page.videoOptions
-        const file_path = path.join(
-            os.homedir(),
-            "Movies",
-            "qishui",
-            video_obj.artistName,
-            video_obj.videoName
-        )
-        const file_dir = path.dirname(file_path)
-        await mkdir(file_dir, { recursive: true })
-        let file = Bun.file(file_path + ".json");
-        let existed = await file.exists()
-        if (existed) {
-            console.log("文件已经存在", file_path + ".mp4")
-            process.exit(0)
-        } else {
-            await file.write(Response.json(data))
-            Bun.write(file_path + ".mp4", await downloadMedia(video_obj.url));
-            console.log(file_path + ".mp4")
+            "Referer": "https://music.douyin.com/",
+            "Referrer-Policy": "strict-origin-when-cross-origin"
         }
-        return
+    })
+    // 页面标题形如 《茉莉花》@汽水音乐，取歌名做文件名
+    let name = (await page.title()).split("@")[0].trim() || String(Date.now())
+    name = name.replace(/\//g, "-")
+    await saveMedia(response, name)
+    try {
+        await browser.close()
+    } catch(e:any) {
+        console.error(e.message)
     }
-    let author = audio_obj.artistName
-    let name = audio_obj.trackName
-    let url = audio_obj.url
+    process.exit(0)
+})
+await page.goto(url_result.value);
 
-    let file_path = path.join(
+async function saveMedia(response:Response, name: string) {
+    const dirname = path.join(
         os.homedir(),
         "Movies",
-        "qishui",
-        author,
-        name
+        "qishui"
     )
-    let file_dir = path.dirname(file_path)
-    await mkdir(file_dir, { recursive: true })
-    let file = Bun.file(file_path + ".json");
-    let existed = await file.exists()
-    if (existed) {
-        console.log("文件已经存在", file_path + ".mp3")
-        process.exit(0)
-    } else {
-        await file.write(Response.json(data))
-        Bun.write(file_path + ".mp3", await downloadMedia(url));
-        console.log(file_path + ".mp3")
-    }
-
-
+    await mkdir(dirname,{recursive:true})
+    const ext = (response.headers.get("content-type") ?? "").includes("video") ? "mp4" : "mp3"
+    const file_path = path.join(dirname, `${name}.${ext}`)
+    await Bun.write(file_path,response)
+    console.log(file_path,"->","Success")
 }

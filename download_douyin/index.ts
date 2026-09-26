@@ -4,11 +4,10 @@ import path from "node:path"
 import os from "node:os"
 import { mkdir } from "node:fs/promises";
 import { parseArgs } from "util";
-import { anyChar, composeP, fmap, manyTill, search, space, spaces } from "@diqye/myparser";
-import { chromium, webkit } from "playwright";
-import { mkdirSync } from "node:fs";
+import { anyChar, composeP, fmap, manyTill, search, space } from "@diqye/myparser";
+import { chromium } from "playwright";
 
-let version = "0.1.1"
+let version = "0.2.0"
 let args = Bun.argv.slice(2)
 let parsed = parseArgs({
     args,
@@ -56,8 +55,8 @@ if (url_result.status != "SUCCESS") {
     process.exit()
 }
 
-
-const browser = await chromium.launch({headless:true,devtools:false});  // Or 'firefox' or 'webkit'.
+// channel: "chrome" 直接驱动本机安装的 Chrome，无需下载 playwright 浏览器
+const browser = await chromium.launch({ headless: true, channel: "chrome" });
 const page = await browser.newPage();
 let isHanding = false
 page.route("**/*",async route => {
@@ -72,7 +71,7 @@ page.route("**/*",async route => {
     }
     isHanding = true
     const headers = request.headers()
-    // console.log(request.url())
+
     route.abort()
 
     const response = await fetch(request.url(), {
@@ -99,11 +98,9 @@ page.route("**/*",async route => {
     } catch(e:any) {
         console.error(e.message)
     }
+    process.exit(0)
 })
 await page.goto(url_result.value);
-// other actions...
-// console.log(await response?.text())
-// await browser.close();
 
 async function saveMedia(response:Response) {
     const dirname = path.join(
