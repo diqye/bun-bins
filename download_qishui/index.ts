@@ -86,7 +86,7 @@ page.route("**/*",async route => {
         }
     })
     // 页面标题形如 《茉莉花》@汽水音乐，取歌名做文件名
-    let name = (await page.title()).split("@")[0].trim() || String(Date.now())
+    let name = (await page.title()).split("@")[0]!.trim() || String(Date.now())
     name = name.replace(/\//g, "-")
     await saveMedia(response, name)
     try {
@@ -96,7 +96,7 @@ page.route("**/*",async route => {
     }
     process.exit(0)
 })
-await page.goto(url_result.value);
+await page.goto(url_result.value).catch(()=>void 0);
 
 async function saveMedia(response:Response, name: string) {
     const dirname = path.join(

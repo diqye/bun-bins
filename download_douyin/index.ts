@@ -96,11 +96,11 @@ page.route("**/*",async route => {
         await browser.close()
         console.log('正常关闭浏览器')
     } catch(e:any) {
-        console.error(e.message)
+        // console.error(e.message)
     }
     process.exit(0)
 })
-await page.goto(url_result.value);
+await page.goto(url_result.value).catch(() => {});
 
 async function saveMedia(response:Response) {
     const dirname = path.join(
