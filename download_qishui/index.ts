@@ -85,10 +85,22 @@ page.route("**/*",async route => {
             "Referrer-Policy": "strict-origin-when-cross-origin"
         }
     })
-    // 页面标题形如 《茉莉花》@汽水音乐，取歌名做文件名
-    let name = (await page.title()).split("@")[0]!.trim() || String(Date.now())
+    // 歌手/歌名/歌词都在分享页 SSR 数据 _ROUTER_DATA 中，页面渲染后必然存在，无需等待
+    const info = await page.evaluate(() => {
+        const t = (window as any)._ROUTER_DATA?.loaderData?.track_page?.audioWithLyricsOption
+        return t
+            ? { artist: t.artistName as string | undefined, track: t.trackName as string | undefined, lyrics: t.lyrics ?? null }
+            : null
+    })
+    // 页面标题形如 《茉莉花》@汽水音乐，作为歌名 fallback
+    let name = info?.track?.trim() || (await page.title()).split("@")[0]!.trim() || String(Date.now())
     name = name.replace(/\//g, "-")
-    await saveMedia(response, name)
+    const artist = info?.artist?.trim().replace(/\//g, "-") || "未知歌手"
+    const dirname = path.join(os.homedir(), "Movies", "qishui", artist, name)
+    await saveMedia(response, dirname, name)
+    if (info?.lyrics) {
+        await saveLyric(info.lyrics, dirname, name)
+    }
     try {
         await browser.close()
     } catch(e:any) {
@@ -98,15 +110,26 @@ page.route("**/*",async route => {
 })
 await page.goto(url_result.value).catch(()=>void 0);
 
-async function saveMedia(response:Response, name: string) {
-    const dirname = path.join(
-        os.homedir(),
-        "Movies",
-        "qishui"
-    )
+async function saveMedia(response:Response, dirname: string, name: string) {
     await mkdir(dirname,{recursive:true})
-    const ext = (response.headers.get("content-type") ?? "").includes("video") ? "mp4" : "mp3"
+    const buf = new Uint8Array(await response.arrayBuffer())
+    // content-type 不可靠（同一资源 audio/mp4、video/mp4 都可能返回），按魔数判别实际格式
+    const ext = sniffExt(buf)
     const file_path = path.join(dirname, `${name}.${ext}`)
-    await Bun.write(file_path,response)
+    await Bun.write(file_path, buf)
+    console.log(file_path,"->","Success")
+}
+
+function sniffExt(buf: Uint8Array): string {
+    // "ID3" 或 MPEG 帧同步(0xFF Ex) 为 mp3；ftyp brand M4A 为纯音频 m4a；其余 MP4 容器归 mp4
+    if (buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33) return "mp3"
+    if (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0) return "mp3"
+    if (new TextDecoder().decode(buf.slice(8, 12)) === "M4A ") return "m4a"
+    return "mp4"
+}
+
+async function saveLyric(lyrics: unknown, dirname: string, name: string) {
+    const file_path = path.join(dirname, `${name}.json`)
+    await Bun.write(file_path, JSON.stringify(lyrics, null, 2))
     console.log(file_path,"->","Success")
 }
